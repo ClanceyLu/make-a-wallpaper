@@ -27,7 +27,6 @@ export default class Selector {
     this.ctx.strokeRect(this.x, this.y, this.width, this.height);
     this.ctx.beginPath();
     this.ctx.arc(this.x + this.width, this.y + this.height, 10, 0, Math.PI * 2);
-    console.log('arc')
     this.ctx.fillStyle = 'red';
     this.ctx.closePath();
     this.ctx.fill();
