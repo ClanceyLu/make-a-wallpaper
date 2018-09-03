@@ -1,4 +1,5 @@
 import StackBlur from 'stackblur-canvas';
+import { $ } from './util';
 
 import Selector from './selector';
 
@@ -24,25 +25,37 @@ class Draw {
     this.canvas = canvas;
     this.width = 1280;
     this.height = 720;
-    this.startDragging = this.startDragging.bind(this);
-    this.dragging = this.dragging.bind(this);
-    this.stopDragging = this.stopDragging.bind(this);
-    this.selector = new Selector(100, 100, 400, 200);
+    this.selector = new Selector(100, 100, 100, 100, canvas);
   }
 
   init() {
     this.canvas.width = this.width;
     this.canvas.height = this.height;
-    this.canvas.onmousedown = this.startDragging;
-    this.canvas.onmouseup = this.stopDragging;
-    this.canvas.onmouseout = this.stopDragging;
-    this.canvas.onmousemove = this.dragging;
     this.ctx = this.canvas.getContext('2d');
   }
 
-  drawBackground(image) {
+  setBackground(image) {
     this.image = image;
-    this.drawImage(image);
+    const s = image.width / image.height;
+    this.canvas.height = document.body.clientHeight - 20;
+    this.canvas.width = this.canvas.height * s;
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+    const img = document.createElement('img');
+    img.src = image.src;
+    img.width = this.width;
+    img.height = this.height;
+    // img.style.filter = 'blur(20px)';
+    img.classList.add('background');
+    const $img = $('.editor img');
+    if ($img) {
+      $('.editor').removeChild($img);
+    }
+    $('.editor').append(img);
+  }
+
+  drawBackground() {
+    this.drawImage(this.image);
   }
 
   drawImage(image) {
@@ -64,61 +77,28 @@ class Draw {
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.drawImage(this.image);
     const imageData = this.ctx.getImageData(x, y, width, height);
-    getImage(imageData, x, y)
+    // this.ctx.clearRect(0, 0, this.width, this.height);
+    getImage(imageData, width, height)
       .then((forntImage) => {
+        this.ctx.save();
         this.setBlur(60);
         this.ctx.shadowOffsetX = 4;
         this.ctx.shadowOffsetY = 4;
         this.ctx.shadowColor = '#ccc';
         this.ctx.shadowBlur = 40;
         this.ctx.drawImage(forntImage, x, y);
-        this.ctx.stroke();
+        this.ctx.restore();
+        const url = this.canvas.toDataURL('image/png');
+        this.setDownload(url);
       });
+  }
+
+  setDownload(url) {
+    $('.download').href = url;
   }
 
   // 选择框
   drawSelector() {
-    this.selector.draw(this.ctx);
-  }
-
-  startDragging(e) {
-    const clickX = e.pageX - this.canvas.offsetLeft;
-    const clickY = e.pageY - this.canvas.offsetTop;
-    const {
-      x,
-      y,
-      width,
-      height,
-    } = this.selector.getInfo();
-    // 点位于选择框内
-    if (
-      clickX > x
-      && clickX < x + width
-      && clickY > y
-      && clickY < y + height
-    ) {
-      this.selector.setActive(true);
-      // 光标位置与选择框左上角点偏移量
-      this.offsetX = clickX - x;
-      this.offsetY = clickY - y;
-    } else if (clickX === (x + width) && clickY === (y + height)) {
-      console.log('m');
-    } else {
-      this.selector.setActive(false);
-    }
-  }
-
-  stopDragging() {
-    this.selector.setActive(false);
-  }
-
-  dragging(e) {
-    if (!this.selector.getActive()) return;
-    const clickX = e.pageX - this.canvas.offsetLeft;
-    const clickY = e.pageY - this.canvas.offsetTop;
-    this.selector.setPosition(clickX - this.offsetX, clickY - this.offsetY);
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    this.drawImage(this.image);
     this.selector.draw(this.ctx);
   }
 }
