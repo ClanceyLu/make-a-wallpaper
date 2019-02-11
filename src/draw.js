@@ -1,7 +1,6 @@
 import StackBlur from 'stackblur-canvas';
+import getLayerData from './layerData';
 import { $ } from './util';
-
-import Selector from './selector';
 
 /*
  * 把imageData生成一张图片返回
@@ -25,7 +24,7 @@ class Draw {
     this.canvas = canvas;
     this.width = 1280;
     this.height = 720;
-    this.selector = new Selector(100, 100, 100, 100, canvas);
+    this.layerData = getLayerData();
   }
 
   init() {
@@ -34,32 +33,21 @@ class Draw {
     this.ctx = this.canvas.getContext('2d');
   }
 
-  setBackground(image) {
-    this.image = image;
-    const s = image.width / image.height;
-    this.canvas.height = document.body.clientHeight - 20;
-    this.canvas.width = this.canvas.height * s;
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
-    const img = document.createElement('img');
-    img.src = image.src;
-    img.width = this.width;
-    img.height = this.height;
-    // img.style.filter = 'blur(20px)';
-    img.classList.add('background');
-    const $img = $('.editor img');
-    if ($img) {
-      $('.editor').removeChild($img);
-    }
-    $('.editor').append(img);
+  // draw layer
+  draw() {
+    this.drawBackground();
+    this.drawSelector();
   }
 
   drawBackground() {
-    this.drawImage(this.image);
-  }
-
-  drawImage(image) {
-    this.ctx.drawImage(image, 0, 0, this.width, this.height);
+    const image = this.layerData.getBackground();
+    const { width, height } = image;
+    // const s = image.width / image.height;
+    // const width = document.body.clientHeight - 40;
+    // const height = width * s;
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.ctx.drawImage(image, 0, 0, width, height);
   }
 
   // 设置背景高斯模糊
@@ -99,7 +87,16 @@ class Draw {
 
   // 选择框
   drawSelector() {
-    this.selector.draw(this.ctx);
+    const selector = this.layerData.getSelector();
+    this.ctx.save();
+    this.ctx.setLineDash([4, 2]);
+    this.ctx.strokeRect(selector.x, selector.y, selector.width, selector.height);
+    this.ctx.beginPath();
+    this.ctx.arc(selector.x + selector.width, selector.y + selector.height, 10, 0, Math.PI * 2);
+    this.ctx.fillStyle = 'red';
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.restore();
   }
 }
 
